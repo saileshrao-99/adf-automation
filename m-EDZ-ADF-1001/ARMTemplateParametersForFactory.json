@@ -1,0 +1,44 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "m-EDZ-ADF-1001"
+		},
+		"LS_Snowflake_KeyVault_connectionString": {
+			"value": "jdbc:snowflake://ru30431.east-us-2.azure.snowflakecomputing.com/?user=saileshrao22&db=TaxisDB&warehouse=TAXISVIRTUALWAREHOUSE"
+		},
+		"ls_m_edz_adls_landing_1001_properties_typeProperties_url": {
+			"value": "https://mntedzlanding1001.dfs.core.windows.net/"
+		},
+		"ls_m_edz_databricks_properties_typeProperties_existingClusterId": {
+			"value": "0531-022558-8arkp1di"
+		},
+		"ls_m_edz_keyvault_properties_typeProperties_baseUrl": {
+			"value": "https://m-EDZ-KeyVault.vault.azure.net/"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_JobID": {
+			"value": "648026916915866"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_DatabricksWorkspaceID": {
+			"value": "adb-7807847321225799.19"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_WaitSeconds": {
+			"value": 5
+		},
+		"FileArrival_properties_typeProperties_scope": {
+			"value": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001"
+		},
+		"m_edz_landing1001-mpep_properties_privateLinkResourceId": {
+			"value": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001"
+		},
+		"m_edz_landing1001-mpep_properties_groupId": {
+			"value": "dfs"
+		},
+		"m_edz_landing1001-mpep_properties_fqdns": {
+			"value": [
+				"mntedzlanding1001.dfs.core.windows.net"
+			]
+		}
+	}
+}

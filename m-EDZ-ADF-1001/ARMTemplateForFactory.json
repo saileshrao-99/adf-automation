@@ -1,0 +1,989 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "m-EDZ-ADF-1001"
+		},
+		"LS_Snowflake_KeyVault_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_Snowflake_KeyVault'",
+			"defaultValue": "jdbc:snowflake://ru30431.east-us-2.azure.snowflakecomputing.com/?user=saileshrao22&db=TaxisDB&warehouse=TAXISVIRTUALWAREHOUSE"
+		},
+		"ls_m_edz_adls_landing_1001_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://mntedzlanding1001.dfs.core.windows.net/"
+		},
+		"ls_m_edz_databricks_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0531-022558-8arkp1di"
+		},
+		"ls_m_edz_keyvault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://m-EDZ-KeyVault.vault.azure.net/"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_JobID": {
+			"type": "string",
+			"defaultValue": "648026916915866"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_DatabricksWorkspaceID": {
+			"type": "string",
+			"defaultValue": "adb-7807847321225799.19"
+		},
+		"FileArrival_properties_Run Databricks Job_parameters_WaitSeconds": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"FileArrival_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001"
+		},
+		"m_edz_landing1001-mpep_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001"
+		},
+		"m_edz_landing1001-mpep_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"m_edz_landing1001-mpep_properties_fqdns": {
+			"type": "array",
+			"defaultValue": [
+				"mntedzlanding1001.dfs.core.windows.net"
+			]
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_WKD')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyDataChange1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".csv"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "WKD",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DL_target",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-06-13T18:55:08Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/WKD')]",
+				"[concat(variables('factoryId'), '/datasets/DL_target')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Databricks')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute Jobs API",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "@concat('https://',pipeline().parameters.DatabricksWorkspaceID,'.azuredatabricks.net/api/2.1/jobs/run-now')",
+								"type": "Expression"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@concat('{\"job_id\":',pipeline().parameters.JobID,'}')",
+								"type": "Expression"
+							},
+							"authentication": {
+								"resource": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+								"credential": {
+									"referenceName": "cred_m_edz_keyvault",
+									"type": "CredentialReference"
+								},
+								"type": "UserAssignedManagedIdentity"
+							}
+						}
+					},
+					{
+						"name": "Wait Until Job Completes",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "Execute Jobs API",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(equals(variables('JobStatus'),'Running'))",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Check Job Run API",
+									"type": "WebActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"url": {
+											"value": "@concat('https://',pipeline().parameters.DatabricksWorkspaceID,'.azuredatabricks.net/api/2.1/jobs/runs/get?run_id=',activity('Execute Jobs API').output.run_id)",
+											"type": "Expression"
+										},
+										"method": "GET",
+										"headers": {},
+										"authentication": {
+											"resource": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+											"credential": {
+												"referenceName": "cred_m_edz_keyvault",
+												"type": "CredentialReference"
+											},
+											"type": "UserAssignedManagedIdentity"
+										}
+									}
+								},
+								{
+									"name": "Set Job Status",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Check Job Run API",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "JobStatus",
+										"value": {
+											"value": "@if(\nor(\nequals(activity('Check Job Run API').output.state.life_cycle_state, 'PENDING'), equals(activity('Check Job Run API').output.state.life_cycle_state, 'RUNNING')\n),\n'Running',\nactivity('Check Job Run API').output.state.result_state\n)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Wait to recheck API",
+									"type": "Wait",
+									"dependsOn": [
+										{
+											"activity": "Set Job Status",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": {
+											"value": "@pipeline().parameters.WaitSeconds",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"JobID": {
+						"type": "string",
+						"defaultValue": "648026916915866"
+					},
+					"DatabricksWorkspaceID": {
+						"type": "string",
+						"defaultValue": "adb-7807847321225799.19"
+					},
+					"WaitSeconds": {
+						"type": "int",
+						"defaultValue": 30
+					}
+				},
+				"variables": {
+					"JobStatus": {
+						"type": "String",
+						"defaultValue": "Running"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-08T21:28:11Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/cred_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_ExtractPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Web1",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://management.azure.com/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-ADF/providers/Microsoft.DataFactory/factories/m-EDZ-ADF-1001/pipelines/Snowflake API?api-version=2018-06-01",
+							"method": "GET",
+							"headers": {},
+							"authentication": {
+								"type": "MSI",
+								"resource": "https://management.azure.com/"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-25T00:41:31Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Run Databricks Job')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute Jobs API",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "@concat('https://',pipeline().parameters.DatabricksWorkspaceID,'.azuredatabricks.net/api/2.1/jobs/run-now')",
+								"type": "Expression"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@concat('{\"job_id\":',pipeline().parameters.JobID,'}')",
+								"type": "Expression"
+							},
+							"authentication": {
+								"resource": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+								"credential": {
+									"referenceName": "cred_m_edz_keyvault",
+									"type": "CredentialReference"
+								},
+								"type": "UserAssignedManagedIdentity"
+							}
+						}
+					},
+					{
+						"name": "Wait Until Job Completes",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "Execute Jobs API",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(equals(variables('JobStatus'),'Running'))",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Check Job Run API",
+									"type": "WebActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"url": {
+											"value": "@concat('https://',pipeline().parameters.DatabricksWorkspaceID,'.azuredatabricks.net/api/2.1/jobs/runs/get?run_id=',activity('Execute Jobs API').output.run_id)",
+											"type": "Expression"
+										},
+										"method": "GET",
+										"headers": {},
+										"authentication": {
+											"resource": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+											"credential": {
+												"referenceName": "cred_m_edz_keyvault",
+												"type": "CredentialReference"
+											},
+											"type": "UserAssignedManagedIdentity"
+										}
+									}
+								},
+								{
+									"name": "Set Job Status",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Check Job Run API",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "JobStatus",
+										"value": {
+											"value": "@if(\nor(\nequals(activity('Check Job Run API').output.state.life_cycle_state, 'PENDING'), equals(activity('Check Job Run API').output.state.life_cycle_state, 'RUNNING')\n),\n'Running',\nactivity('Check Job Run API').output.state.life_cycle_state\n)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Wait to Recheck API",
+									"type": "Wait",
+									"dependsOn": [
+										{
+											"activity": "Set Job Status",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": {
+											"value": "@pipeline().parameters.WaitSeconds",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					},
+					{
+						"name": "Job State Check",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Wait Until Job Completes",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(string(activity('Check Job Run API').output.state.result_state),'SUCCESS')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Fail",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": {
+											"value": "@string(activity('Check Job Run API').output.state.result_state)",
+											"type": "Expression"
+										},
+										"errorCode": "500"
+									}
+								}
+							]
+						}
+					}
+				],
+				"concurrency": 10,
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"JobID": {
+						"type": "string",
+						"defaultValue": "648026916915866"
+					},
+					"DatabricksWorkspaceID": {
+						"type": "string",
+						"defaultValue": "adb-7807847321225799.19"
+					},
+					"WaitSeconds": {
+						"type": "int",
+						"defaultValue": 5
+					}
+				},
+				"variables": {
+					"JobStatus": {
+						"type": "String",
+						"defaultValue": "Running"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-08T22:10:30Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/cred_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Snowflake API')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "SnowflakeAPI",
+						"description": "Snowflake API Web Activity allows us to run queries on Snowflake using SQL API reference.",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "https://vyeqcid-cl49640.snowflakecomputing.com/api/v2/statements",
+								"type": "Expression"
+							},
+							"connectVia": {
+								"referenceName": "m-edz-adf-mvnet-ir",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {
+								"User-Agent": {
+									"value": "@variables('userAgent')",
+									"type": "Expression"
+								},
+								"X-Snowflake-Authorization-Token-Type": {
+									"value": "@variables('tokenType')",
+									"type": "Expression"
+								},
+								"Content-Type": "application/json",
+								"Accept": "application/json",
+								"Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+							},
+							"body": {
+								"statement": "SELECT * FROM TAXIZONES;",
+								"timeout": "0",
+								"resultSetMetaData": {
+									"format": "json"
+								},
+								"database": "TAXISDB",
+								"schema": "PUBLIC",
+								"warehouse": "COMPUTE_WH",
+								"role": "ACCOUNTADMIN"
+							},
+							"turnOffAsync": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"baseUrl": {
+						"type": "String",
+						"defaultValue": "https://vyeqcid-cl49640.snowflakecomputing.com"
+					},
+					"tokenType": {
+						"type": "String",
+						"defaultValue": "KEYPAIR_JWT"
+					},
+					"token": {
+						"type": "String",
+						"defaultValue": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+					},
+					"userAgent": {
+						"type": "String",
+						"defaultValue": "myApplication/1.0"
+					},
+					"uuid": {
+						"type": "String"
+					},
+					"statementHandle": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-25T16:50:32Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/m-edz-adf-mvnet-ir')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Snowflake API_dev')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "SnowflakeAPI",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "https://vyeqcid-cl49640.snowflakecomputing.com/api/v2/statements",
+								"type": "Expression"
+							},
+							"connectVia": {
+								"referenceName": "m-edz-adf-mvnet-ir",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {
+								"User-Agent": {
+									"value": "@variables('userAgent')",
+									"type": "Expression"
+								},
+								"X-Snowflake-Authorization-Token-Type": {
+									"value": "@variables('tokenType')",
+									"type": "Expression"
+								},
+								"Content-Type": "application/json",
+								"Accept": "application/json",
+								"Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+							},
+							"body": {
+								"statement": "SELECT * FROM TAXIZONES;",
+								"timeout": "0",
+								"resultSetMetaData": {
+									"format": "json"
+								},
+								"database": "TAXISDB",
+								"schema": "PUBLIC",
+								"warehouse": "COMPUTE_WH",
+								"role": "ACCOUNTADMIN"
+							},
+							"turnOffAsync": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"baseUrl": {
+						"type": "String",
+						"defaultValue": "https://vyeqcid-cl49640.snowflakecomputing.com"
+					},
+					"tokenType": {
+						"type": "String",
+						"defaultValue": "KEYPAIR_JWT"
+					},
+					"token": {
+						"type": "String",
+						"defaultValue": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+					},
+					"userAgent": {
+						"type": "String",
+						"defaultValue": "myApplication/1.0"
+					},
+					"uuid": {
+						"type": "String"
+					},
+					"statementHandle": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "dev"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-24T23:05:54Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/m-edz-adf-mvnet-ir')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DL_target')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_m_edz_adls_landing_1001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "target",
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_m_edz_adls_landing_1001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/WKD')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_m_edz_adls_landing_1001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "WKD_WORKER_20230407.csv",
+						"folderPath": "sor",
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_m_edz_adls_landing_1001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_Snowflake_KeyVault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "Snowflake",
+				"typeProperties": {
+					"authenticationType": "Basic",
+					"connectionString": "[parameters('LS_Snowflake_KeyVault_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ls_m_edz_keyvault",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "Snowflake"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_m_edz_adls_landing_1001')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_m_edz_adls_landing_1001_properties_typeProperties_url')]",
+					"credential": {
+						"referenceName": "cred_m_edz_keyvault",
+						"type": "CredentialReference"
+					}
+				},
+				"connectVia": {
+					"referenceName": "m-edz-adf-mvnet-ir",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/m-edz-adf-mvnet-ir')]",
+				"[concat(variables('factoryId'), '/credentials/cred_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_m_edz_databricks')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7807847321225799.19.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-Databricks-01/providers/Microsoft.Databricks/workspaces/m-EDZ-Databricks-01",
+					"credential": {
+						"referenceName": "cred_m_edz_keyvault",
+						"type": "CredentialReference"
+					},
+					"existingClusterId": "[parameters('ls_m_edz_databricks_properties_typeProperties_existingClusterId')]"
+				},
+				"connectVia": {
+					"referenceName": "m-edz-adf-mvnet-ir",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/m-edz-adf-mvnet-ir')]",
+				"[concat(variables('factoryId'), '/credentials/cred_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_m_edz_keyvault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('ls_m_edz_keyvault_properties_typeProperties_baseUrl')]",
+					"credential": {
+						"referenceName": "cred_m_edz_keyvault",
+						"type": "CredentialReference"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/cred_m_edz_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FileArrival')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Run Databricks Job",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"JobID": "[parameters('FileArrival_properties_Run Databricks Job_parameters_JobID')]",
+							"DatabricksWorkspaceID": "[parameters('FileArrival_properties_Run Databricks Job_parameters_DatabricksWorkspaceID')]",
+							"WaitSeconds": "[parameters('FileArrival_properties_Run Databricks Job_parameters_WaitSeconds')]"
+						}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/raw/blobs/",
+					"ignoreEmptyBlobs": false,
+					"scope": "[parameters('FileArrival_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Run Databricks Job')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/m-edz-adf-mvnet-ir')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "East US",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 10,
+							"cleanup": false,
+							"customProperties": []
+						},
+						"pipelineExternalComputeScaleProperties": {
+							"timeToLive": 60
+						}
+					}
+				},
+				"managedVirtualNetwork": {
+					"type": "ManagedVirtualNetworkReference",
+					"referenceName": "default"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/cred_m_edz_keyvault')]",
+			"type": "Microsoft.DataFactory/factories/credentials",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {
+					"resourceId": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourcegroups/m-EDZ-ADF/providers/Microsoft.ManagedIdentity/userAssignedIdentities/m-edz-usrmngid"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+			"apiVersion": "2018-06-01",
+			"properties": {},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/m_edz_landing1001-mpep')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('m_edz_landing1001-mpep_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('m_edz_landing1001-mpep_properties_groupId')]",
+				"fqdns": "[parameters('m_edz_landing1001-mpep_properties_fqdns')]"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/managedVirtualNetworks/default')]"
+			]
+		}
+	]
+}
