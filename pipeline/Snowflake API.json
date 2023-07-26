@@ -1,0 +1,84 @@
+{
+	"name": "Snowflake API",
+	"properties": {
+		"activities": [
+			{
+				"name": "SnowflakeAPI",
+				"description": "Snowflake API Web Activity allows us to run queries on Snowflake using SQL API reference.",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://vyeqcid-cl49640.snowflakecomputing.com/api/v2/statements",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "m-edz-adf-mvnet-ir",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"User-Agent": {
+							"value": "@variables('userAgent')",
+							"type": "Expression"
+						},
+						"X-Snowflake-Authorization-Token-Type": {
+							"value": "@variables('tokenType')",
+							"type": "Expression"
+						},
+						"Content-Type": "application/json",
+						"Accept": "application/json",
+						"Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+					},
+					"body": {
+						"statement": "SELECT * FROM TAXIZONES;",
+						"timeout": "0",
+						"resultSetMetaData": {
+							"format": "json"
+						},
+						"database": "TAXISDB",
+						"schema": "PUBLIC",
+						"warehouse": "COMPUTE_WH",
+						"role": "ACCOUNTADMIN"
+					},
+					"turnOffAsync": true
+				}
+			}
+		],
+		"variables": {
+			"baseUrl": {
+				"type": "String",
+				"defaultValue": "https://vyeqcid-cl49640.snowflakecomputing.com"
+			},
+			"tokenType": {
+				"type": "String",
+				"defaultValue": "KEYPAIR_JWT"
+			},
+			"token": {
+				"type": "String",
+				"defaultValue": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJWWUVRQ0lELUNMNDk2NDAuU0FJTEVTSFJBTzIyLlNIQTI1NjptM3JxM1dld2Z1clZWaE1mc0ZMdWVTSko5cVBLSWt0RWFFRG84WWhZQ1NJPSIsInN1YiI6IlZZRVFDSUQtQ0w0OTY0MC5TQUlMRVNIUkFPMjIiLCJpYXQiOjE2ODk2MDA4MzYsImV4cCI6MTY4OTY4NzIzNn0.KUBr0k3aPVEPnnemU8CHwc_K0xYm8hF6VMYEtEuEIGgEUHQsTcOuCw99fJwPJH7FcBfYh1i0BK_YRUXaPwf4TcsCh2RdG3i6_-sUxSncGqX0gMZYsoB5rOmPGBHdpJPFxnpSjHJncgGP9-Tc5dwCNNJ9F2B5rwD6RM3SCsyg-myEMfpHg3otx_PUNZgZnZCS3v_EM_rhA54lneYU6yvGwPzwjLlxX_gz_EusuF3buL-RkeGR21B5946FzzQBPFkyAwj2AZjKjhQ6FApbGYz4Dg9Gjf8RwFmadG6_AiNBFsEXb5vE1YJaDFDZPshoJRYBSC5JMiod5skH4KbtvKgdLA"
+			},
+			"userAgent": {
+				"type": "String",
+				"defaultValue": "myApplication/1.0"
+			},
+			"uuid": {
+				"type": "String"
+			},
+			"statementHandle": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-07-25T16:50:32Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

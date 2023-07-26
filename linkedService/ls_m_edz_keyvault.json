@@ -1,0 +1,15 @@
+{
+	"name": "ls_m_edz_keyvault",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://m-EDZ-KeyVault.vault.azure.net/",
+			"credential": {
+				"referenceName": "cred_m_edz_keyvault",
+				"type": "CredentialReference"
+			}
+		}
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"name": "m_edz_landing1001-mpep",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001",
+		"groupId": "dfs",
+		"fqdns": [
+			"mntedzlanding1001.dfs.core.windows.net"
+		]
+	}
+}

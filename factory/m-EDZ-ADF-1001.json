@@ -1,0 +1,15 @@
+{
+	"name": "m-EDZ-ADF-1001",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned,UserAssigned",
+		"principalId": "72f2da02-4fae-4982-9f36-8e76711aaae1",
+		"tenantId": "96e4c5af-d96a-498a-9ff8-622c5c74bcd6",
+		"userAssignedIdentities": {
+			"/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourcegroups/m-EDZ-ADF/providers/Microsoft.ManagedIdentity/userAssignedIdentities/m-edz-usrmngid": {
+				"clientId": "8c06102b-38b4-4a07-8999-9ab9cc8d5c60",
+				"principalId": "4952e67e-69b0-4793-bc13-36c948fe2781"
+			}
+		}
+	}
+}

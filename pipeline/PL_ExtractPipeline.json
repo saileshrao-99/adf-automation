@@ -1,0 +1,31 @@
+{
+	"name": "PL_ExtractPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Web1",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://management.azure.com/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-ADF/providers/Microsoft.DataFactory/factories/m-EDZ-ADF-1001/pipelines/Snowflake API?api-version=2018-06-01",
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://management.azure.com/"
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-07-25T00:41:31Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

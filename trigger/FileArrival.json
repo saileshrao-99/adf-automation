@@ -1,0 +1,29 @@
+{
+	"name": "FileArrival",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Run Databricks Job",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"JobID": "648026916915866",
+					"DatabricksWorkspaceID": "adb-7807847321225799.19",
+					"WaitSeconds": 5
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/raw/blobs/",
+			"ignoreEmptyBlobs": false,
+			"scope": "/subscriptions/9d77daff-9706-4ab3-b8e3-d5545481c2a2/resourceGroups/m-EDZ-StorageAccount-01/providers/Microsoft.Storage/storageAccounts/mntedzlanding1001",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

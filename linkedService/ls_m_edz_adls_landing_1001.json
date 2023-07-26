@@ -1,0 +1,19 @@
+{
+	"name": "ls_m_edz_adls_landing_1001",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://mntedzlanding1001.dfs.core.windows.net/",
+			"credential": {
+				"referenceName": "cred_m_edz_keyvault",
+				"type": "CredentialReference"
+			}
+		},
+		"connectVia": {
+			"referenceName": "m-edz-adf-mvnet-ir",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
