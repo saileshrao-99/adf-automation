@@ -4,7 +4,7 @@
 		"activities": [
 			{
 				"name": "SnowflakeAPI",
-				"description": "Snowflake API Web Activity allows us to run queries on Snowflake using SQL API reference.",
+				"description": "Snowflake API Web Activity allows us to run queries on Snowflake using SQL API reference. This is to test the GitLab Integration",
 				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
